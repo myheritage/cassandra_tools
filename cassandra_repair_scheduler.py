@@ -273,16 +273,21 @@ class CqlWrapper(object):
             if not line:
                 continue
             step, repair_command = line.split(" ", 1)
-            try:
-                self.query(self.REPAIR_UPDATE, nodename=self.nodename,
-                           newstatus=step,
-                           data_center=self.data_center,
-                           ttl=self.option_group.ttl_repair)
-            except:
-                logging.warning("Failed to update repair status, continuing anyway")
-            self.close()        # Individual repairs may be slow
-            logging.debug(repair_command)
-            subprocess.call(repair_command, shell=True)
+            while True:
+                try:
+                    self.query(self.REPAIR_UPDATE, nodename=self.nodename,
+                               newstatus=step,
+                               data_center=self.data_center,
+                               ttl=self.option_group.ttl_repair)
+                except:
+                    logging.warning("Failed to update repair status, continuing anyway")
+                self.close()        # Individual repairs may be slow
+                logging.debug("timeout --signal 9 %s setsid %s " % (self.option_group.ttl_repair * 2, repair_command))
+                ret = subprocess.call("timeout --signal 9 %s setsid %s " % (self.option_group.ttl_repair * 2, repair_command), shell=True)
+                if ret == 0:
+                    break
+                else:
+                    logging.warning("Repair step %s failed with exit code %s - retrying" % (step, ret))
         try:
             self.query(self.REPAIR_UPDATE, nodename=self.nodename,
                        ttl=self.option_group.ttl,

@@ -282,8 +282,8 @@ class CqlWrapper(object):
                 except:
                     logging.warning("Failed to update repair status, continuing anyway")
                 self.close()        # Individual repairs may be slow
-                logging.debug("setsid timeout --signal 9 %s setsid %s " % (self.option_group.ttl_repair * 2, repair_command))
-                ret = subprocess.call("setsid timeout --signal 9 %s %s " % (self.option_group.ttl_repair * 2, repair_command), shell=True)
+                logging.debug("setsid timeout --signal 9 %s setsid %s " % (self.option_group.ttl_repair - 5, repair_command))
+                ret = subprocess.call("setsid timeout --signal 9 %s %s " % (self.option_group.ttl_repair - 5, repair_command), shell=True)
                 if ret == 0:
                     break
                 else:

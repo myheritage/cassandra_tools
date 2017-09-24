@@ -273,6 +273,7 @@ class CqlWrapper(object):
             if not line:
                 continue
             step, repair_command = line.split(" ", 1)
+            retry_count = 0
             while True:
                 try:
                     self.query(self.REPAIR_UPDATE, nodename=self.nodename,
@@ -287,6 +288,11 @@ class CqlWrapper(object):
                 if ret == 0:
                     break
                 else:
+                    if retry_count > 1000:
+                        logging.warning("Repair step %s failed with exit code %s - too many retries, restarting run" % (step, ret))
+                        self.reset_repair_status()
+                        exit()
+                    retry_count += 1
                     logging.warning("Repair step %s failed with exit code %s - retrying" % (step, ret))
         try:
             self.query(self.REPAIR_UPDATE, nodename=self.nodename,
